@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { IResponse } from './types/Iresponse';
 
 @Injectable()
 export class AppService {
   async getHello(): Promise<IResponse> {
     return {
-      status_code: 200,
+      status_code: HttpStatus.OK,
       detail: 'ok',
       result: 'working',
     };
