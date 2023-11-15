@@ -1,7 +1,16 @@
 version: '3'
 services:
-  app:
-    build: .
+  db:
+    container_name: postgres-be-meduzzen
+    image: postgres:14-alpine
     restart: always
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    env_file:
+      - ./.env
     ports:
-      - '8080:8080'
+      - ${DB_PORT}:${DB_PORT}
