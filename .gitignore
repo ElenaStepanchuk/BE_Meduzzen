@@ -3,6 +3,7 @@
 /node_modules
 /.env
 /pgdata
+/src/typeorm.module.ts
 
 
 # Logs
