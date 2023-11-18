@@ -11,6 +11,7 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (ConfigService: ConfigService) => ({
@@ -20,11 +21,8 @@ import { UserModule } from './user/user.module';
         username: ConfigService.get<string>('DB_USERNAME'),
         password: ConfigService.get('DB_PASSWORD'),
         database: ConfigService.get('DB_NAME'),
-        entities: [__dirname + '/**/*.entity{.ts, .js}'],
-        // migrations: [__dirname + '/**/*{.ts, .js}'],
         synchronize: false,
         autoLoadEntities: true,
-        logging: true,
       }),
       inject: [ConfigService],
     }),

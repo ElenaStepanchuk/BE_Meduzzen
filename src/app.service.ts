@@ -1,9 +1,15 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { IResponse } from './types/Iresponse';
 
 @Injectable()
 export class AppService {
+  logger: Logger;
+  constructor() {
+    this.logger = new Logger('AppService LOGGER');
+  }
+
   async getHello(): Promise<IResponse> {
+    this.logger.log('It`s working');
     return {
       status_code: HttpStatus.OK,
       detail: 'ok',
