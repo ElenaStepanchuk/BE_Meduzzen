@@ -2,7 +2,7 @@
 
 Back End repository
 
-The application starts command "npm run start" in the terminal.
+The application starts command "npm run start:dev" in the terminal.
 The tests runs command "npm run test" in the terminal.
 
 Build docker image command "docker build -t be-meduzen-docker ."
