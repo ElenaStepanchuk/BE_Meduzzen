@@ -4,116 +4,120 @@ import {
   Get,
   Post,
   Put,
-  Req,
-  Res,
   Param,
-  UseInterceptors,
   ParseIntPipe,
   Body,
   HttpCode,
   HttpStatus,
-  // Query,
-  // DefaultValuePipe,
+  HttpException,
+  Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
-import { Response, Request } from 'express';
 import { Logger } from '@nestjs/common';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { CreateUserDto } from './dto/createUser.dto';
 
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Pagination } from 'nestjs-typeorm-paginate';
+
 import { UserService } from './user.service';
-// import { Pagination } from 'nestjs-typeorm-paginate';
+import { PaginationService } from 'src/utils/pagination/util.pagination';
+
+import { IResponse } from 'src/types/Iresponse';
+import { User } from './entities/user.entity';
 
 @Controller('users')
 export class UserController {
   logger: Logger;
-  constructor(private readonly userService: UserService) {
+  constructor(
+    private readonly userService: UserService,
+    private readonly paginationService: PaginationService,
+  ) {
     this.logger = new Logger('USER CONTROLLER LOGGER');
   }
 
+  // Registor new user
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  async createUser(@Body() createUserDto: CreateUserDto): Promise<IResponse> {
+    const newUser = await this.userService.createUser(createUserDto);
+    return {
+      status_code: HttpStatus.CREATED,
+      detail: newUser,
+      result: 'We created new user',
+    };
+  }
+
   // Get all users
-  @Get('/')
+  @Get()
   @HttpCode(HttpStatus.OK)
-  async getAllUser(@Res() res: Response) {
-    const users = await this.userService.getAllUsers();
-    return res.send({
-      status_code: HttpStatus.OK,
-      detail: { data: users },
-      result: 'We got all users',
+  async getAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+  ): Promise<Pagination<User>> {
+    limit = limit > 100 ? 100 : limit;
+    return this.paginationService.paginate({
+      page,
+      limit,
+      route: 'http://localhost:4000/users',
     });
   }
-  // @Get('/')
-  // @HttpCode(HttpStatus.OK)
-  // async getAllUser(
-  //   @Res() res: Response,
-  //   @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-  //   @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-  // ): Promise<Pagination<IUser>> {
-  //   limit = limit > 100 ? 100 : limit;
-  //   return this.userService.paginate({
-  //     page,
-  //     limit,
-  //     route: '/',
-  //   });
-  // }
-  //   const users = await this.userService.getAllUsers();
-  //   return res.send({
-  //     status_code: HttpStatus.OK,
-  //     detail: { data: users },
-  //     result: 'We got all users',
-  //   });
-  // }
 
   // Get user by id
-  @Get('/:id')
+  @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async getUser(@Res() res: Response, @Param('id', ParseIntPipe) id: number) {
+  async getUser(@Param('id') id: number): Promise<IResponse> {
     const userData = await this.userService.getUserData(id);
-
-    return res.send({
-      status_code: HttpStatus.OK,
-      data: userData,
-      result: `User width id:${id} found.`,
-    });
-  }
-
-  // Registor new user
-  @Post('/')
-  @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor(''))
-  async createUser(@Req() req: Request, @Res() res: Response) {
-    await this.userService.createUser(req.body);
-    return res.send({
-      status_code: HttpStatus.CREATED,
-      result: 'New user created',
-    });
+    if (userData) {
+      return {
+        status_code: HttpStatus.OK,
+        detail: userData,
+        result: `User width id:${id} found.`,
+      };
+    }
+    throw new HttpException(
+      `User width id:${id} not found.`,
+      HttpStatus.NOT_FOUND,
+    );
   }
 
   // Update user data
-  @Put('/:id')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateUserDto,
-    @Res() res: Response,
-  ) {
-    this.userService.updateUserData(id, body);
-    return res.send({
-      status_code: HttpStatus.OK,
-      result: `User width id:${id} updated.`,
-    });
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<IResponse> {
+    const userData = await this.userService.getUserData(id);
+    if (userData) {
+      await this.userService.updateUserData(id, updateUserDto);
+      return {
+        status_code: HttpStatus.OK,
+        detail: updateUserDto,
+        result: `User width id:${id} updated.`,
+      };
+    }
+    throw new HttpException(
+      `User width id:${id} not found.`,
+      HttpStatus.NOT_FOUND,
+    );
   }
 
   // Delete user by id
-  @Delete('/:id')
+  @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  async deleteUser(
-    @Param('id', ParseIntPipe) id: number,
-    @Res() res: Response,
-  ) {
-    this.userService.deleteUser(id);
-    return res.send({
-      status_code: HttpStatus.OK,
-      result: `User width id:${id} deleted.`,
-    });
+  async deleteUser(@Param('id', ParseIntPipe) id: number) {
+    const userData = await this.userService.getUserData(id);
+    if (userData) {
+      await this.userService.deleteUser(id);
+      return {
+        status_code: HttpStatus.OK,
+        detail: id,
+        result: `User width id:${id} deleted.`,
+      };
+    }
+    throw new HttpException(
+      `User width id:${id} not found.`,
+      HttpStatus.NOT_FOUND,
+    );
   }
 }
