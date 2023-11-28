@@ -63,6 +63,6 @@ export class UserController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async deleteUser(@Param('id', ParseIntPipe) id: number) {
-    await this.userService.getUserData(id);
+    return await this.userService.getUserData(id);
   }
 }
