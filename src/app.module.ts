@@ -1,11 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { UserController } from './user/user.controller';
+import { UserService } from './user/user.service';
+import { PaginationService } from './utils/pagination/util.pagination';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,7 +33,7 @@ import { UserModule } from './user/user.module';
     AuthModule,
     UserModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UserController],
+  providers: [AppService, UserService, PaginationService],
 })
 export class AppModule {}

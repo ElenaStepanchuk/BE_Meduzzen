@@ -9,7 +9,7 @@ export class AppController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getHello(): Promise<IResponse> {
+  async getHello(): Promise<IResponse<string>> {
     this.logger = new Logger('AppController LOGGER');
     this.logger.log('AppController is working');
     return this.appService.getHello();
