@@ -1,7 +1,5 @@
-import { User } from 'src/user/entities/user.entity';
-
-export interface IResponse {
+export interface IResponse<T> {
   status_code: number;
-  detail: string | User[] | User;
+  detail: T;
   result: string;
 }

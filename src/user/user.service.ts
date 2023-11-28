@@ -5,11 +5,15 @@ import { Repository } from 'typeorm';
 import { genSalt, hash } from 'bcrypt';
 
 import { User } from './entities/user.entity';
+import { IResponse } from 'src/types/Iresponse';
+
+import { PaginationService } from 'src/utils/pagination/util.pagination';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private readonly paginationService: PaginationService,
   ) {
     this.logger = new Logger('CHANGING IN DATABASE');
   }
@@ -17,7 +21,7 @@ export class UserService {
   logger: Logger;
 
   // Registor new user
-  public async createUser(userData: User): Promise<User> {
+  public async createUser(userData: User): Promise<IResponse<User>> {
     try {
       const salt = await genSalt(10);
       const hashedPassword = await hash(userData.password, salt);
@@ -26,7 +30,13 @@ export class UserService {
         password: hashedPassword,
       });
       this.logger.warn('New user added in database');
-      return await this.userRepository.save(newUser);
+      await this.userRepository.save(newUser);
+      const resalt = {
+        status_code: HttpStatus.CREATED,
+        detail: newUser,
+        result: 'We created new user',
+      };
+      return resalt;
     } catch (error) {
       throw new HttpException(
         {
@@ -42,7 +52,7 @@ export class UserService {
   }
 
   // Get all users
-  public async getAllUsers(): Promise<User[]> {
+  public async getAllUsers(): Promise<IResponse<User[]> | null> {
     try {
       const usersList = await this.userRepository.find({
         select: [
@@ -55,7 +65,11 @@ export class UserService {
         ],
       });
 
-      return usersList;
+      return {
+        status_code: HttpStatus.OK,
+        detail: usersList,
+        result: `We get all users list`,
+      };
     } catch (error) {
       throw new HttpException(
         {
@@ -71,7 +85,7 @@ export class UserService {
   }
 
   // Get user by id
-  public async getUserData(id: number): Promise<User | null> {
+  public async getUserData(id: number): Promise<IResponse<User> | null> {
     try {
       const userData = await this.userRepository.findOne({
         where: { id },
@@ -85,7 +99,17 @@ export class UserService {
         ],
       });
 
-      return userData;
+      if (userData) {
+        return {
+          status_code: HttpStatus.OK,
+          detail: userData,
+          result: `User width id:${id} found.`,
+        };
+      }
+      throw new HttpException(
+        `User width id:${id} not found.`,
+        HttpStatus.NOT_FOUND,
+      );
     } catch (error) {
       throw new HttpException(
         {
@@ -101,15 +125,22 @@ export class UserService {
   }
 
   // Update user data
-  public async updateUserData(id: number, body: User) {
+  public async updateUserData(
+    id: number,
+    body: User,
+  ): Promise<IResponse<User> | null> {
     try {
       const { first_name, last_name, email, createdAt, updatedAt } = body;
-      const updateUserData = await this.userRepository.update(
+      await this.userRepository.update(
         { id },
         { first_name, last_name, email, createdAt, updatedAt },
       );
       this.logger.warn(`User width id${id} updated in database`);
-      return updateUserData;
+      return {
+        status_code: HttpStatus.OK,
+        detail: body,
+        result: `User width id:${id} updated.`,
+      };
     } catch (error) {
       throw new HttpException(
         {
@@ -125,10 +156,15 @@ export class UserService {
   }
 
   // Delete user by id
-  public async deleteUser(id: number): Promise<void> {
+  public async deleteUser(id: number): Promise<IResponse<number> | null> {
     try {
       await this.userRepository.delete(id);
       this.logger.warn(`User width id${id} deleted in database`);
+      return {
+        status_code: HttpStatus.OK,
+        detail: id,
+        result: `User width id:${id} deleted.`,
+      };
     } catch (error) {
       throw new HttpException(
         {
