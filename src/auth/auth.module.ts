@@ -15,10 +15,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 
 config({ path: join(process.cwd(), '.env') });
 
-const configService = new ConfigService();
-
-const JWT_SECRET = configService.get('JWT_SECRET');
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([Auth]),
@@ -27,7 +23,7 @@ const JWT_SECRET = configService.get('JWT_SECRET');
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: JWT_SECRET,
+        secret: configService.get('JWT_SECRET'),
         signOptions: { expiresIn: '4h' },
       }),
       inject: [ConfigService],
