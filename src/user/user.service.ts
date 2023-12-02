@@ -7,13 +7,10 @@ import { genSalt, hash } from 'bcrypt';
 import { User } from './entities/user.entity';
 import { IResponse } from 'src/types/Iresponse';
 
-import { PaginationService } from 'src/utils/pagination/util.pagination';
-
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    private readonly paginationService: PaginationService,
   ) {
     this.logger = new Logger('CHANGING IN DATABASE');
   }
@@ -99,17 +96,11 @@ export class UserService {
         ],
       });
 
-      if (userData) {
-        return {
-          status_code: HttpStatus.OK,
-          detail: userData,
-          result: `User width id:${id} found.`,
-        };
-      }
-      throw new HttpException(
-        `User width id:${id} not found.`,
-        HttpStatus.NOT_FOUND,
-      );
+      return {
+        status_code: HttpStatus.OK,
+        detail: userData,
+        result: `User width id:${id} found.`,
+      };
     } catch (error) {
       throw new HttpException(
         {
@@ -170,6 +161,28 @@ export class UserService {
         {
           status_code: HttpStatus.FORBIDDEN,
           error: `User width id:${id} not found.`,
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Find user by email
+  async findOne(email: string): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email },
+      });
+      this.logger.warn('user', user.first_name);
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: `Email or password not valid.`,
         },
         HttpStatus.FORBIDDEN,
         {

@@ -8,5 +8,5 @@ export class UpdateUserDto {
   last_name: string;
 
   @IsEmail()
-  email: string;
+  email?: string;
 }

@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
-import { PaginationService } from './utils/pagination/util.pagination';
 
 @Global()
 @Module({
@@ -34,6 +33,6 @@ import { PaginationService } from './utils/pagination/util.pagination';
     UserModule,
   ],
   controllers: [AppController, UserController],
-  providers: [AppService, UserService, PaginationService],
+  providers: [AppService, UserService],
 })
 export class AppModule {}
