@@ -9,7 +9,7 @@ import {
 @Entity()
 export class Auth {
   @PrimaryGeneratedColumn()
-  id: number;
+  id?: number;
 
   @Column()
   email: string;

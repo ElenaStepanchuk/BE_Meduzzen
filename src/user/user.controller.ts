@@ -3,12 +3,16 @@ import {
   Delete,
   Get,
   Post,
-  Put,
+  Patch,
   Param,
   ParseIntPipe,
   Body,
   HttpCode,
   HttpStatus,
+  UsePipes,
+  ValidationPipe,
+  // UseGuards,
+  Query,
 } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { UpdateUserDto } from './dto/updateUser.dto';
@@ -18,16 +22,31 @@ import { UserService } from './user.service';
 
 import { IResponse } from 'src/types/Iresponse';
 import { User } from './entities/user.entity';
+// import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { PaginationService } from 'src/utils/pagination/pagination.service';
 
 @Controller('users')
 export class UserController {
   logger: Logger;
-  constructor(private readonly userService: UserService) {
+  constructor(
+    private readonly userService: UserService, // private readonly paginationController: PaginationController,
+    private readonly paginationService: PaginationService,
+  ) {
     this.logger = new Logger('USER CONTROLLER LOGGER');
+  }
+
+  // Pagination;
+  @Get('pagination')
+  findAllWidthPagination(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 3,
+  ): Promise<IResponse<User[]>> {
+    return this.paginationService.findAllWidthPagination(+page, +limit);
   }
 
   // Registor new user
   @Post()
+  @UsePipes(new ValidationPipe())
   @HttpCode(HttpStatus.CREATED)
   async createUser(
     @Body() createUserDto: CreateUserDto,
@@ -50,7 +69,7 @@ export class UserController {
   }
 
   // Update user data
-  @Put(':id')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   async updateUser(
     @Param('id', ParseIntPipe) id: number,

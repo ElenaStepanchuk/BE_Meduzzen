@@ -1,4 +1,10 @@
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -6,11 +12,14 @@ import { genSalt, hash } from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { IResponse } from 'src/types/Iresponse';
+import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from './dto/createUser.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {
     this.logger = new Logger('CHANGING IN DATABASE');
   }
@@ -18,19 +27,33 @@ export class UserService {
   logger: Logger;
 
   // Registor new user
-  public async createUser(userData: User): Promise<IResponse<User>> {
+  public async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<IResponse<any>> {
     try {
+      const existUser = await this.userRepository.findOne({
+        where: {
+          email: createUserDto.email,
+        },
+      });
+      if (existUser) throw new BadRequestException('This email already exist');
+
       const salt = await genSalt(10);
-      const hashedPassword = await hash(userData.password, salt);
-      const newUser = this.userRepository.create({
-        ...userData,
+      const hashedPassword = await hash(createUserDto.password, salt);
+
+      const newUser = await this.userRepository.save({
+        ...createUserDto,
         password: hashedPassword,
       });
       this.logger.warn('New user added in database');
-      await this.userRepository.save(newUser);
+
+      // const token = this.jwtService.sign({ email: createUserDto.email });
+      // this.logger.warn('token', token);
+
       const resalt = {
         status_code: HttpStatus.CREATED,
         detail: newUser,
+        // token,
         result: 'We created new user',
       };
       return resalt;
@@ -52,14 +75,7 @@ export class UserService {
   public async getAllUsers(): Promise<IResponse<User[]> | null> {
     try {
       const usersList = await this.userRepository.find({
-        select: [
-          'id',
-          'first_name',
-          'last_name',
-          'email',
-          'createdAt',
-          'updatedAt',
-        ],
+        select: ['id', 'email', 'createdAt', 'updatedAt'],
       });
 
       return {
@@ -86,14 +102,7 @@ export class UserService {
     try {
       const userData = await this.userRepository.findOne({
         where: { id },
-        select: [
-          'id',
-          'first_name',
-          'last_name',
-          'email',
-          'createdAt',
-          'updatedAt',
-        ],
+        select: ['id', 'email', 'createdAt', 'updatedAt'],
       });
 
       return {
@@ -121,11 +130,8 @@ export class UserService {
     body: User,
   ): Promise<IResponse<User> | null> {
     try {
-      const { first_name, last_name, email, createdAt, updatedAt } = body;
-      await this.userRepository.update(
-        { id },
-        { first_name, last_name, email, createdAt, updatedAt },
-      );
+      const { email, createdAt, updatedAt } = body;
+      await this.userRepository.update({ id }, { email, createdAt, updatedAt });
       this.logger.warn(`User width id${id} updated in database`);
       return {
         status_code: HttpStatus.OK,
@@ -176,7 +182,7 @@ export class UserService {
       const user = await this.userRepository.findOne({
         where: { email },
       });
-      this.logger.warn('user', user.first_name);
+      this.logger.warn('user', user.email);
       return user;
     } catch (error) {
       throw new HttpException(

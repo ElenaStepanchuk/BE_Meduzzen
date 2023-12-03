@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
+import { PaginationService } from './pagination.service';
+import { UserService } from 'src/user/user.service';
+
+import { User } from 'src/user/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PaginationService } from 'src/utils/pagination/pagination.service';
 
 @Module({
   imports: [
@@ -19,8 +19,7 @@ import { PaginationService } from 'src/utils/pagination/pagination.service';
       inject: [ConfigService],
     }),
   ],
-  controllers: [UserController],
-  providers: [UserService, PaginationService],
+  providers: [PaginationService, UserService],
   exports: [TypeOrmModule, UserService, PaginationService],
 })
-export class UserModule {}
+export class PaginationModule {}
