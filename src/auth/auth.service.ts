@@ -15,14 +15,21 @@ export class AuthService {
   }
   logger: Logger;
 
-  async validateUser(email: string, pass: string): Promise<User | null> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<IResponse<User> | null> {
     try {
       const user = await this.userService.findOne(email);
       const { password } = user;
       const passwordIsMatch = await compare(pass, password);
 
       if (user && passwordIsMatch) {
-        return user;
+        return {
+          status_code: HttpStatus.OK,
+          detail: user,
+          result: `We added user token.`,
+        };
       }
       return null;
     } catch (error) {
@@ -49,7 +56,7 @@ export class AuthService {
       return {
         status_code: HttpStatus.OK,
         detail: token,
-        result: `We added token user width id: ${id}`,
+        result: `We added user token.`,
       };
     } catch (error) {
       throw new HttpException(

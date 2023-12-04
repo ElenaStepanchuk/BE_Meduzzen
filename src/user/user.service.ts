@@ -12,14 +12,13 @@ import { genSalt, hash } from 'bcrypt';
 
 import { User } from './entities/user.entity';
 import { IResponse } from 'src/types/Iresponse';
-import { JwtService } from '@nestjs/jwt';
+
 import { CreateUserDto } from './dto/createUser.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    private readonly jwtService: JwtService,
   ) {
     this.logger = new Logger('CHANGING IN DATABASE');
   }
@@ -29,7 +28,7 @@ export class UserService {
   // Registor new user
   public async createUser(
     createUserDto: CreateUserDto,
-  ): Promise<IResponse<any>> {
+  ): Promise<IResponse<User> | null> {
     try {
       const existUser = await this.userRepository.findOne({
         where: {
@@ -45,18 +44,13 @@ export class UserService {
         ...createUserDto,
         password: hashedPassword,
       });
+
       this.logger.warn('New user added in database');
-
-      // const token = this.jwtService.sign({ email: createUserDto.email });
-      // this.logger.warn('token', token);
-
-      const resalt = {
+      return {
         status_code: HttpStatus.CREATED,
         detail: newUser,
-        // token,
         result: 'We created new user',
       };
-      return resalt;
     } catch (error) {
       throw new HttpException(
         {
@@ -182,7 +176,7 @@ export class UserService {
       const user = await this.userRepository.findOne({
         where: { email },
       });
-      this.logger.warn('user', user.email);
+
       return user;
     } catch (error) {
       throw new HttpException(
