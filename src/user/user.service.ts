@@ -8,12 +8,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { genSalt, hash } from 'bcrypt';
-
 import { User } from './entities/user.entity';
 import { IResponse } from 'src/types/Iresponse';
 
 import { CreateUserDto } from './dto/createUser.dto';
+import { UpdateUserDto } from './dto/updateUser.dto';
+import { Hash } from 'src/utils/hash.util';
 
 @Injectable()
 export class UserService {
@@ -37,8 +37,8 @@ export class UserService {
       });
       if (existUser) throw new BadRequestException('This email already exist');
 
-      const salt = await genSalt(10);
-      const hashedPassword = await hash(createUserDto.password, salt);
+      const hash = new Hash();
+      const hashedPassword = await hash.hashData(createUserDto.password);
 
       const newUser = await this.userRepository.save({
         ...createUserDto,
@@ -92,23 +92,22 @@ export class UserService {
   }
 
   // Get user by id
-  public async getUserData(id: number): Promise<IResponse<User> | null> {
+  public async getUserById(id: number): Promise<IResponse<User> | null> {
     try {
-      const userData = await this.userRepository.findOne({
+      const user = await this.userRepository.findOne({
         where: { id },
-        select: ['id', 'email', 'createdAt', 'updatedAt'],
       });
-
+      this.logger.warn('id', user);
       return {
         status_code: HttpStatus.OK,
-        detail: userData,
-        result: `User width id:${id} found.`,
+        detail: user,
+        result: `User width id ${id} found.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id:${id} not found.`,
+          error: `User width id ${id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -121,12 +120,12 @@ export class UserService {
   // Update user data
   public async updateUserData(
     id: number,
-    body: User,
+    body: UpdateUserDto,
   ): Promise<IResponse<User> | null> {
     try {
-      const { email, createdAt, updatedAt } = body;
-      await this.userRepository.update({ id }, { email, createdAt, updatedAt });
-      this.logger.warn(`User width id${id} updated in database`);
+      const { email } = body;
+      await this.userRepository.update({ id }, { email });
+      this.logger.warn(`User width id ${id} updated in database`);
       return {
         status_code: HttpStatus.OK,
         detail: body,
@@ -136,7 +135,7 @@ export class UserService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id:${id} not found.`,
+          error: `User width id ${id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -171,18 +170,22 @@ export class UserService {
   }
 
   // Find user by email
-  async findOne(email: string): Promise<User> {
+  async findOneByEmail(email: string): Promise<IResponse<User> | null> {
     try {
       const user = await this.userRepository.findOne({
         where: { email },
       });
 
-      return user;
+      return {
+        status_code: HttpStatus.OK,
+        detail: user,
+        result: `User width  ${email} found.`,
+      };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `Email or password not valid.`,
+          error: `User width this id or email didn't find.`,
         },
         HttpStatus.FORBIDDEN,
         {

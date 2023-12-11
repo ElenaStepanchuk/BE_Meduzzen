@@ -5,7 +5,6 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { PaginationService } from 'src/utils/pagination/pagination.service';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import { PaginationService } from 'src/utils/pagination/pagination.service';
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, PaginationService],
-  exports: [TypeOrmModule, UserService, PaginationService],
+  providers: [UserService],
+  exports: [TypeOrmModule, UserService],
 })
 export class UserModule {}

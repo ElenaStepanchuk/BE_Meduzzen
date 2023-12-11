@@ -3,24 +3,13 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/user/entities/user.entity';
-import { passportJwtSecret } from 'jwks-rsa';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly configService: ConfigService) {
     super({
-      secretOrKeyProvider: passportJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `https://${configService.get(
-          'AUTH0_DOMAIN',
-        )}/.well-known/jwks.json`,
-      }),
-
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      audience: configService.get('AUTH0_AUDIENCE'),
-      issuer: `https://${configService.get('AUTH0_DOMAIN')}/`,
+      secretOrKey: configService.get('JWT_SECRET_ACCESS'),
     });
   }
 
