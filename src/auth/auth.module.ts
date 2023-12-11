@@ -13,6 +13,7 @@ import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AccessTokenStrategy } from './strategies/accessToken.strategy';
 import { RefreshTokenStrategy } from './strategies/refreshToken.starategy';
+import { JwtAuth0Strategy } from './strategies/jwtAuth0.strategy';
 
 config({ path: join(process.cwd(), '.env') });
 
@@ -21,6 +22,7 @@ config({ path: join(process.cwd(), '.env') });
     TypeOrmModule.forFeature([Auth]),
     UserModule,
     PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({}),
@@ -32,6 +34,7 @@ config({ path: join(process.cwd(), '.env') });
     LocalStrategy,
     AccessTokenStrategy,
     RefreshTokenStrategy,
+    JwtAuth0Strategy,
   ],
   controllers: [AuthController],
 })

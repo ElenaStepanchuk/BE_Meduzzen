@@ -17,6 +17,7 @@ import { IResponse } from 'src/types/Iresponse';
 import { User } from 'src/user/entities/user.entity';
 import { AccessTokenGuard } from './guards/accessToken.guard';
 import { RefreshTokenGuard } from './guards/refreshToken.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -25,6 +26,7 @@ export class AuthController {
   }
   logger: Logger;
 
+  @UseGuards(AuthGuard('jwt'))
   @Post('registration')
   @UsePipes(new ValidationPipe())
   async registration(
@@ -33,6 +35,7 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @UsePipes(new ValidationPipe())
@@ -54,6 +57,7 @@ export class AuthController {
     return this.authService.refreshTokens(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
