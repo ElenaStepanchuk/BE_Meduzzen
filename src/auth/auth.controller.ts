@@ -10,13 +10,12 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
+import { ValidateUserGuard } from './guards/validateUser.guard';
 import { JwtAuthGuard } from 'src/types/jwt-auth.guard';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
 import { IResponse } from 'src/types/Iresponse';
 import { User } from 'src/user/entities/user.entity';
 import { AccessTokenGuard } from './guards/accessToken.guard';
-import { RefreshTokenGuard } from './guards/refreshToken.guard';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
@@ -26,7 +25,6 @@ export class AuthController {
   }
   logger: Logger;
 
-  @UseGuards(AuthGuard('jwt'))
   @Post('registration')
   @UsePipes(new ValidationPipe())
   async registration(
@@ -35,8 +33,7 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @UseGuards(LocalAuthGuard)
+  @UseGuards(ValidateUserGuard)
   @Post('login')
   @UsePipes(new ValidationPipe())
   async login(
@@ -51,14 +48,12 @@ export class AuthController {
     this.authService.logout(id);
   }
 
-  @UseGuards(RefreshTokenGuard)
   @Get('refresh')
-  refreshTokens(id: number) {
-    return this.authService.refreshTokens(id);
+  refreshTokens(@Body() token: string) {
+    return this.authService.refreshTokens(token);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AuthGuard('jwt'))
   @Get('me')
   getProfile(@Request() req) {
     return req.user;

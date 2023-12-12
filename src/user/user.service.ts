@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -175,7 +176,7 @@ export class UserService {
       const user = await this.userRepository.findOne({
         where: { email },
       });
-
+      if (!user) throw new NotFoundException('User did not find');
       return {
         status_code: HttpStatus.OK,
         detail: user,

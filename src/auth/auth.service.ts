@@ -4,14 +4,15 @@ import {
   HttpStatus,
   HttpException,
   UnauthorizedException,
-  BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { compare } from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 
+import * as jwt from 'jsonwebtoken';
 import { JwtService } from '@nestjs/jwt';
 import { IResponse } from 'src/types/Iresponse';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
@@ -76,12 +77,11 @@ export class AuthService {
       await this.authRepository.save({
         ...user.detail,
         access_token: tokens.accessToken,
-        firstName: email,
-        lastName: email,
         refresh_token: tokens.refreshToken,
         action_token: tokens.actionToken,
         user_id: user.detail.id,
       });
+
       return user;
     } catch (error) {
       throw new HttpException(
@@ -103,7 +103,8 @@ export class AuthService {
       const checkUser = await this.userService.findOneByEmail(
         createUserDto.email,
       );
-      if (!checkUser) throw new BadRequestException('User does not exist');
+
+      if (!checkUser) throw new NotFoundException('User does not exist');
       const { id, email, password } = checkUser.detail;
       const passwordIsMatch = await compare(createUserDto.password, password);
 
@@ -113,6 +114,7 @@ export class AuthService {
       const tokens = await this.getTokens(id, email);
 
       await this.authRepository.update(id, {
+        access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         action_token: tokens.actionToken,
       });
@@ -143,6 +145,7 @@ export class AuthService {
       await this.authRepository.update(user_id, {
         refresh_token: null,
         action_token: null,
+        access_token: null,
       });
       return {
         status_code: HttpStatus.OK,
@@ -215,27 +218,30 @@ export class AuthService {
     }
   }
 
-  async refreshTokens(id: number): Promise<any> {
+  async refreshTokens(token: string): Promise<any> {
     try {
+      const secret = this.configService.get<string>('JWT_SECRET_ACCESS');
+      const decodedToken = jwt.verify(token, secret) as
+        | { id: number; email: string }
+        | string;
+      this.logger.warn('decodedToken', decodedToken);
+
+      if (typeof decodedToken === 'string') {
+        throw new ForbiddenException('Access Denied');
+      }
+
+      const { id, email } = decodedToken;
       const user = await this.userService.getUserById(id);
 
-      const { email } = user.detail;
+      if (!user) throw new ForbiddenException('Access Denied');
 
-      const auth = await this.authRepository.findOne({
-        where: {
-          email,
-        },
-      });
-
-      if (!user || !auth.refresh_token || !auth.action_token)
-        throw new ForbiddenException('Access Denied');
-
-      const tokens = await this.getTokens(auth.user_id, auth.email);
+      const tokens = await this.getTokens(id, email);
       this.logger.warn('tokens', tokens);
 
-      await this.authRepository.update(auth.id, {
+      await this.authRepository.update(id, {
         refresh_token: tokens.refreshToken,
         action_token: tokens.actionToken,
+        access_token: tokens.accessToken,
       });
 
       return tokens;
@@ -243,7 +249,7 @@ export class AuthService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `Email or password not valid.`,
+          error: 'Email or password not valid.',
         },
         HttpStatus.FORBIDDEN,
         {

@@ -69,7 +69,7 @@ export class UserController {
   async getUser(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<IResponse<User>> {
-    return this.userService.getUserById(+id);
+    return this.userService.getUserById(id);
   }
 
   // Update user data
