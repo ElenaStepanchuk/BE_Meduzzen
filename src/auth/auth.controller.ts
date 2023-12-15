@@ -14,8 +14,7 @@ import { ValidateUserGuard } from './guards/validateUser.guard';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
 import { IResponse } from 'src/types/Iresponse';
 import { User } from 'src/user/entities/user.entity';
-import { AccessTokenGuard } from './guards/accessToken.guard';
-import { Auth0Guard } from './guards/auth0.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -53,7 +52,7 @@ export class AuthController {
     return this.authService.refreshTokens(authHeader);
   }
 
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @Get('me')
   getProfile(
     @Headers('Authorization') authHeader: string,

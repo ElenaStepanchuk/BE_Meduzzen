@@ -23,8 +23,7 @@ import { UserService } from './user.service';
 
 import { IResponse } from 'src/types/Iresponse';
 import { User } from './entities/user.entity';
-import { AccessTokenGuard } from 'src/auth/guards/accessToken.guard';
-import { Auth0Guard } from 'src/auth/guards/auth0.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UserController {
@@ -45,7 +44,7 @@ export class UserController {
 
   // Get all users
   @Get()
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
   async getAllUser(
     @Query('page') page: number = 1,
@@ -56,7 +55,7 @@ export class UserController {
 
   // Get user by email
   @Get(':email')
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
   async getUserByEmailOrId(
     @Param('email') email: string,
@@ -66,7 +65,7 @@ export class UserController {
 
   // Get user by id
   @Get(':id')
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
   async getUser(
     @Param('id', ParseIntPipe) id: number,
@@ -76,7 +75,7 @@ export class UserController {
 
   // Update user data
   @Patch(':id')
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
@@ -88,7 +87,7 @@ export class UserController {
 
   // Delete user by id
   @Delete(':id')
-  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
   async deleteUser(
     @Param('id', ParseIntPipe) id: number,
