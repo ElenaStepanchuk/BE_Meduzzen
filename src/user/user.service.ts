@@ -5,9 +5,11 @@ import {
   HttpStatus,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 import { User } from './entities/user.entity';
 import { IResponse } from 'src/types/Iresponse';
@@ -15,11 +17,14 @@ import { IResponse } from 'src/types/Iresponse';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { Hash } from 'src/utils/hash.util';
+import { DecodedToken } from 'src/utils/decodedToken.util';
+import { Pagination } from 'src/utils/pagination.util';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private configService: ConfigService,
   ) {
     this.logger = new Logger('CHANGING IN DATABASE');
   }
@@ -67,10 +72,17 @@ export class UserService {
   }
 
   // Get all users
-  public async getAllUsers(): Promise<IResponse<User[]> | null> {
+  public async getAllUsers(
+    page: number,
+    limit: number,
+  ): Promise<IResponse<User[]> | null> {
     try {
+      const pagination = new Pagination();
+      const paginatePage = await pagination.getPage(page, limit);
+
       const usersList = await this.userRepository.find({
         select: ['id', 'email', 'createdAt', 'updatedAt'],
+        ...paginatePage,
       });
 
       return {
@@ -97,8 +109,9 @@ export class UserService {
     try {
       const user = await this.userRepository.findOne({
         where: { id },
+        select: ['id', 'email', 'createdAt', 'updatedAt'],
       });
-      this.logger.warn('id', user);
+
       return {
         status_code: HttpStatus.OK,
         detail: user,
@@ -120,12 +133,25 @@ export class UserService {
 
   // Update user data
   public async updateUserData(
-    id: number,
+    user_id: number,
+    authHeader: string,
     body: UpdateUserDto,
   ): Promise<IResponse<User> | null> {
     try {
-      const { email } = body;
-      await this.userRepository.update({ id }, { email });
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+      if (id !== user_id)
+        throw new ForbiddenException('You can update only your profile!');
+
+      const { email, first_name, last_name, photo } = body;
+      if (email)
+        throw new ForbiddenException('You can`t update or change your email!');
+      await this.userRepository.update(
+        { id },
+        { first_name, last_name, photo },
+      );
+
       this.logger.warn(`User width id ${id} updated in database`);
       return {
         status_code: HttpStatus.OK,
@@ -136,7 +162,7 @@ export class UserService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id ${id} not found.`,
+          error: `User width id ${user_id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -147,8 +173,17 @@ export class UserService {
   }
 
   // Delete user by id
-  public async deleteUser(id: number): Promise<IResponse<number> | null> {
+  public async deleteUser(
+    user_id: number,
+    authHeader: string,
+  ): Promise<IResponse<number> | null> {
     try {
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+      if (id !== user_id)
+        throw new ForbiddenException('You can delete only your profile!');
+
       await this.userRepository.delete(id);
       this.logger.warn(`User width id${id} deleted in database`);
       return {
@@ -160,7 +195,7 @@ export class UserService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id:${id} not found.`,
+          error: `User width id:${user_id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {

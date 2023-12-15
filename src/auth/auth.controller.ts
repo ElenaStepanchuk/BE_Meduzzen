@@ -7,16 +7,15 @@ import {
   ValidationPipe,
   Logger,
   Body,
-  Request,
+  Headers,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ValidateUserGuard } from './guards/validateUser.guard';
-import { JwtAuthGuard } from 'src/types/jwt-auth.guard';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
 import { IResponse } from 'src/types/Iresponse';
 import { User } from 'src/user/entities/user.entity';
 import { AccessTokenGuard } from './guards/accessToken.guard';
-import { AuthGuard } from '@nestjs/passport';
+import { Auth0Guard } from './guards/auth0.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -42,20 +41,23 @@ export class AuthController {
     return this.authService.login(createUserDto);
   }
 
-  @UseGuards(AccessTokenGuard)
   @Get('logout')
-  logout(@Body() id: number) {
-    this.authService.logout(id);
+  logout(
+    @Headers('Authorization') authHeader: string,
+  ): Promise<IResponse<boolean>> {
+    return this.authService.logout(authHeader);
   }
 
   @Get('refresh')
-  refreshTokens(@Body() token: string) {
-    return this.authService.refreshTokens(token);
+  refreshTokens(@Headers('Authorization') authHeader: string): Promise<object> {
+    return this.authService.refreshTokens(authHeader);
   }
 
-  @UseGuards(JwtAuthGuard, AuthGuard('jwt'))
+  @UseGuards(AccessTokenGuard, new Auth0Guard('auth0'))
   @Get('me')
-  getProfile(@Request() req) {
-    return req.user;
+  getProfile(
+    @Headers('Authorization') authHeader: string,
+  ): Promise<IResponse<User>> {
+    return this.authService.getProfile(authHeader);
   }
 }

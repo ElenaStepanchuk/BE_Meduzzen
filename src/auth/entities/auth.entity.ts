@@ -24,7 +24,7 @@ export class Auth {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ nullable: true })
   access_token: string;
 
   @Column({ nullable: true })
