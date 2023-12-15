@@ -19,6 +19,15 @@ export class User {
   @Column()
   password?: string;
 
+  @Column({ nullable: true })
+  first_name?: string;
+
+  @Column({ nullable: true })
+  last_name?: string;
+
+  @Column({ nullable: true })
+  photo?: string;
+
   @OneToOne(() => Auth, (auth) => auth.user)
   auth: Auth;
 

@@ -12,7 +12,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AccessTokenStrategy } from './strategies/accessToken.strategy';
-import { JwtAuth0Strategy } from './strategies/jwtAuth0.strategy';
+import { Auth0Strategy } from './strategies/auth0.strategy';
 
 config({ path: join(process.cwd(), '.env') });
 
@@ -32,7 +32,7 @@ config({ path: join(process.cwd(), '.env') });
     AuthService,
     ValidateUserStrategy,
     AccessTokenStrategy,
-    JwtAuth0Strategy,
+    Auth0Strategy,
   ],
   controllers: [AuthController],
 })

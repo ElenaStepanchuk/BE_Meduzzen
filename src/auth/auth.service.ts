@@ -12,18 +12,19 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 
-import * as jwt from 'jsonwebtoken';
 import { JwtService } from '@nestjs/jwt';
 import { IResponse } from 'src/types/Iresponse';
 import { CreateUserDto } from 'src/user/dto/createUser.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Auth } from './entities/auth.entity';
+import { GetTokens } from 'src/utils/getTokens.util';
+import { DecodedToken } from 'src/utils/decodedToken.util';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
+    private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
     @InjectRepository(Auth) private authRepository: Repository<Auth>,
@@ -71,8 +72,13 @@ export class AuthService {
       const user = await this.userService.createUser({ ...createUserDto });
 
       const { id, email } = user.detail;
-      const tokens = await this.getTokens(id, email);
-      this.logger.warn('tokens', tokens);
+
+      const newTokens = new GetTokens(this.jwtService, this.configService);
+      const tokens = (await newTokens.getTokens(id, email)) as {
+        accessToken: string;
+        refreshToken: string;
+        actionToken: string;
+      };
 
       await this.authRepository.save({
         ...user.detail,
@@ -111,7 +117,12 @@ export class AuthService {
       if (!passwordIsMatch)
         throw new UnauthorizedException('Email or password not valid!');
 
-      const tokens = await this.getTokens(id, email);
+      const newTokens = new GetTokens(this.jwtService, this.configService);
+      const tokens = (await newTokens.getTokens(id, email)) as {
+        accessToken: string;
+        refreshToken: string;
+        actionToken: string;
+      };
 
       await this.authRepository.update(id, {
         access_token: tokens.accessToken,
@@ -140,9 +151,13 @@ export class AuthService {
   }
 
   // logout user
-  async logout(user_id: number): Promise<IResponse<boolean>> {
+  async logout(authHeader: string): Promise<IResponse<boolean>> {
     try {
-      await this.authRepository.update(user_id, {
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+
+      await this.authRepository.update(id, {
         refresh_token: null,
         action_token: null,
         access_token: null,
@@ -150,7 +165,7 @@ export class AuthService {
       return {
         status_code: HttpStatus.OK,
         detail: true,
-        result: `User Logouted.`,
+        result: `User logged out.`,
       };
     } catch (error) {
       throw new HttpException(
@@ -166,85 +181,55 @@ export class AuthService {
     }
   }
 
-  async getTokens(id: number, email: string): Promise<any> {
+  // update refresh, access and action tokens
+  async refreshTokens(authHeader: string): Promise<IResponse<object>> {
     try {
-      const accessToken = await this.jwtService.signAsync(
-        {
-          id,
-          email,
-        },
-        {
-          secret: this.configService.get<string>('JWT_SECRET_ACCESS'),
-          expiresIn: '15m',
-        },
-      );
-      const refreshToken = await this.jwtService.signAsync(
-        {
-          id,
-          email,
-        },
-        {
-          secret: this.configService.get<string>('JWT_SECRET_REFRESH'),
-          expiresIn: '1d',
-        },
-      );
-      const actionToken = await this.jwtService.signAsync(
-        {
-          id,
-          email,
-        },
-        {
-          secret: this.configService.get<string>('JWT_SECRET_ACTION'),
-          expiresIn: '1d',
-        },
-      );
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id, email } = decodedToken as { id: number; email: string };
 
-      return {
-        accessToken,
-        refreshToken,
-        actionToken,
+      const newTokens = new GetTokens(this.jwtService, this.configService);
+
+      const tokens = (await newTokens.getTokens(id, email)) as {
+        accessToken: string;
+        refreshToken: string;
+        actionToken: string;
       };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status_code: HttpStatus.FORBIDDEN,
-          error: 'Email or password not valid.',
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
-  }
-
-  async refreshTokens(token: string): Promise<any> {
-    try {
-      const secret = this.configService.get<string>('JWT_SECRET_ACCESS');
-      const decodedToken = jwt.verify(token, secret) as
-        | { id: number; email: string }
-        | string;
-      this.logger.warn('decodedToken', decodedToken);
-
-      if (typeof decodedToken === 'string') {
-        throw new ForbiddenException('Access Denied');
-      }
-
-      const { id, email } = decodedToken;
-      const user = await this.userService.getUserById(id);
-
-      if (!user) throw new ForbiddenException('Access Denied');
-
-      const tokens = await this.getTokens(id, email);
-      this.logger.warn('tokens', tokens);
 
       await this.authRepository.update(id, {
         refresh_token: tokens.refreshToken,
         action_token: tokens.actionToken,
         access_token: tokens.accessToken,
       });
+      return {
+        status_code: HttpStatus.OK,
+        detail: tokens,
+        result: `User logged out.`,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Email or password not valid.',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
 
-      return tokens;
+  async getProfile(authHeader: string): Promise<IResponse<User>> {
+    try {
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+      const user = await this.userService.getUserById(id);
+
+      if (!user) throw new ForbiddenException('Access Denied');
+
+      return user;
     } catch (error) {
       throw new HttpException(
         {
