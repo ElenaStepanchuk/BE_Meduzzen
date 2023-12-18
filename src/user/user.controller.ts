@@ -54,10 +54,10 @@ export class UserController {
   }
 
   // Get user by email
-  @Get(':email')
+  @Get('email/:email')
   @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
-  async getUserByEmailOrId(
+  async getUserByEmail(
     @Param('email') email: string,
   ): Promise<IResponse<User>> {
     return this.userService.findOneByEmail(email);

@@ -17,9 +17,6 @@ export class Auth {
   @Column()
   user_id: number;
 
-  @Column()
-  email: string;
-
   @OneToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;

@@ -1,4 +1,5 @@
 import { Auth } from 'src/auth/entities/auth.entity';
+import { Company } from 'src/company/entities/company.entity';
 import {
   Column,
   CreateDateColumn,
@@ -6,6 +7,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  ManyToMany,
 } from 'typeorm';
 
 @Entity('users')
@@ -30,6 +32,9 @@ export class User {
 
   @OneToOne(() => Auth, (auth) => auth.user)
   auth: Auth;
+
+  @ManyToMany(() => Company, (company) => company.users)
+  companies: Company[];
 
   @CreateDateColumn()
   createdAt?: Date;

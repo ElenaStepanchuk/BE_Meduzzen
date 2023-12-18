@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { JwtService } from '@nestjs/jwt';
+import { CompanyModule } from './company/company.module';
 
 @Global()
 @Module({
@@ -32,6 +33,7 @@ import { JwtService } from '@nestjs/jwt';
     }),
     AuthModule,
     UserModule,
+    CompanyModule,
   ],
   controllers: [AppController, UserController],
   providers: [AppService, UserService, JwtService],
