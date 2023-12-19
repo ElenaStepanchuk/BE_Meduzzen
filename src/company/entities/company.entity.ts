@@ -1,4 +1,3 @@
-// import { User } from 'src/user/entities/user.entity';
 import { Member } from 'src/company/entities/member.entity';
 import {
   Column,
@@ -14,7 +13,9 @@ export class Company {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @OneToMany(() => Member, (member) => member.company, { onDelete: 'CASCADE' })
+  @OneToMany(() => Member, (member) => member.company, {
+    onDelete: 'CASCADE',
+  })
   companies: Company[];
 
   @Column()
