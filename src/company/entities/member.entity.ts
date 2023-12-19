@@ -21,9 +21,6 @@ export class Member {
   @Column()
   user: string;
 
-  @Column()
-  company_name: string;
-
   @ManyToOne(() => Company, (company) => company.companies, {
     eager: true,
     cascade: true,
