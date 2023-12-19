@@ -13,7 +13,10 @@ export class Company {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @ManyToMany(() => User, (user) => user.companies, { onDelete: 'CASCADE' })
+  @ManyToMany(() => User, (user) => user.companies, {
+    onDelete: 'CASCADE',
+    eager: true,
+  })
   users: User[];
 
   @Column()

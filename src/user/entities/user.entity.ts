@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToMany,
+  JoinTable,
 } from 'typeorm';
 
 @Entity('users')
@@ -34,6 +35,7 @@ export class User {
   auth: Auth;
 
   @ManyToMany(() => Company, (company) => company.users)
+  @JoinTable()
   companies: Company[];
 
   @CreateDateColumn()

@@ -8,15 +8,15 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/createCompany.dto';
 import { UpdateCompanyDto } from './dto/updateCompany.dto';
 import { Company } from './entities/company.entity';
 import { IResponse } from 'src/types/Iresponse';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
+// import { RolesGuard } from './guards/roles.guard';
+// import { Roles } from './decorators/roles.decorator';
 
 @Controller('companies')
 export class CompanyController {
@@ -24,8 +24,8 @@ export class CompanyController {
 
   // Registor new company
   @Post()
-  @UseGuards(RolesGuard)
-  @Roles(['owner'])
+  // @UseGuards(RolesGuard)
+  // @Roles(['owner'])
   async create(
     @Body() createCompanyDto: CreateCompanyDto,
   ): Promise<IResponse<Company>> {
