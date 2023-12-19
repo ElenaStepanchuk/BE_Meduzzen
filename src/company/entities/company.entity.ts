@@ -1,11 +1,12 @@
-import { User } from 'src/user/entities/user.entity';
+// import { User } from 'src/user/entities/user.entity';
+import { Member } from 'src/company/entities/member.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  ManyToMany,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('companies')
@@ -13,11 +14,8 @@ export class Company {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @ManyToMany(() => User, (user) => user.companies, {
-    onDelete: 'CASCADE',
-    eager: true,
-  })
-  users: User[];
+  @OneToMany(() => Member, (member) => member.company, { onDelete: 'CASCADE' })
+  companies: Company[];
 
   @Column()
   company_name: string;

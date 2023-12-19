@@ -13,12 +13,17 @@ import { IResponse } from 'src/types/Iresponse';
 import { UserService } from 'src/user/user.service';
 import { Repository } from 'typeorm';
 import { Pagination } from 'src/utils/pagination.util';
+import { Member } from './entities/member.entity';
+import { DecodedToken } from 'src/utils/decodedToken.util';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class CompanyService {
   constructor(
     private userService: UserService,
+    private configService: ConfigService,
     @InjectRepository(Company) private companyRepository: Repository<Company>,
+    @InjectRepository(Member) private memberRepository: Repository<Member>,
   ) {
     this.logger = new Logger('COMPANY SERVICE');
   }
@@ -28,6 +33,7 @@ export class CompanyService {
   // Register new company
   async createCompany(
     createCompanyDto: CreateCompanyDto,
+    authHeader: string,
   ): Promise<IResponse<Company> | null> {
     try {
       const existCompany = await this.companyRepository.findOne({
@@ -36,8 +42,22 @@ export class CompanyService {
       if (existCompany)
         throw new BadRequestException('This company already exist');
 
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+      const user = await this.userService.getUserById(id);
+
       const newCompany = await this.companyRepository.save({
         ...createCompanyDto,
+      });
+
+      this.logger.warn('newCompany', newCompany);
+      await this.memberRepository.save({
+        role: 'owner',
+        user_id: user.detail.id,
+        user: user.detail.email,
+        company_name: newCompany.company_name,
+        company: newCompany,
       });
       this.logger.warn('New company added in database');
       return {
@@ -115,6 +135,7 @@ export class CompanyService {
   }
 
   async updateCompanyById(
+    authHeader: string,
     id: number,
     body: UpdateCompanyDto,
   ): Promise<IResponse<Company> | null> {
@@ -126,6 +147,16 @@ export class CompanyService {
       if (!existCompany)
         throw new BadRequestException('This company not found!');
 
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { email } = decodedToken as { email: string };
+
+      const company = await this.memberRepository.findOne({
+        where: { user: email },
+      });
+
+      if (!company)
+        throw new BadRequestException(' You can update only your own company!');
       const { company_name, company_description, visibility } = body;
       await this.companyRepository.update(
         { id },
@@ -133,6 +164,7 @@ export class CompanyService {
       );
 
       this.logger.warn(`Company with id ${id} updated in database`);
+
       return {
         status_code: HttpStatus.OK,
         detail: body,
@@ -152,12 +184,29 @@ export class CompanyService {
     }
   }
 
-  async deleteCompanyById(id: number): Promise<IResponse<Company>> {
+  // delete company
+  async deleteCompanyById(
+    authHeader: string,
+    id: number,
+  ): Promise<IResponse<Company>> {
     try {
       const company = await this.companyRepository.findOne({
         where: { id },
       });
       if (!company) throw new BadRequestException('This company no found!');
+
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { email } = decodedToken as { email: string };
+
+      const deleteCompany = await this.memberRepository.findOne({
+        where: { user: email },
+      });
+
+      if (!deleteCompany)
+        throw new BadRequestException(' You can delete only your own company!');
+
+      await this.memberRepository.delete(deleteCompany.id);
       await this.companyRepository.delete(id);
       this.logger.warn(`Company with id${id} deleted in database`);
       return {

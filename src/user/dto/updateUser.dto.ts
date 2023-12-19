@@ -16,5 +16,7 @@ export class UpdateUserDto {
 
   auth: Auth;
 
+  role: string;
+
   companies: Company[];
 }
