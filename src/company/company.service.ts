@@ -155,9 +155,10 @@ export class CompanyService {
         where: { user: email },
       });
 
-      if (!company)
+      if (!company && company.role !== 'owner')
         throw new BadRequestException(' You can update only your own company!');
       const { company_name, company_description, visibility } = body;
+
       await this.companyRepository.update(
         { id },
         { company_name, company_description, visibility },
@@ -203,7 +204,7 @@ export class CompanyService {
         where: { user: email },
       });
 
-      if (!deleteCompany)
+      if (!deleteCompany && deleteCompany.role !== 'owner')
         throw new BadRequestException(' You can delete only your own company!');
 
       await this.memberRepository.delete(deleteCompany.id);
