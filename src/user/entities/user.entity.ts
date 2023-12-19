@@ -28,6 +28,9 @@ export class User {
   @Column({ nullable: true })
   photo?: string;
 
+  @Column({ nullable: true })
+  role: string;
+
   @OneToOne(() => Auth, (auth) => auth.user)
   auth: Auth;
 

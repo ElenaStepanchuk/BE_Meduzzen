@@ -111,17 +111,17 @@ export class UserService {
         where: { id },
         select: ['id', 'email', 'createdAt', 'updatedAt'],
       });
-
+      if (!user) throw new BadRequestException('This user not found!');
       return {
         status_code: HttpStatus.OK,
         detail: user,
-        result: `User width id ${id} found.`,
+        result: `User with id ${id} found.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id ${id} not found.`,
+          error: `User with id ${id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -152,17 +152,17 @@ export class UserService {
         { first_name, last_name, photo },
       );
 
-      this.logger.warn(`User width id ${id} updated in database`);
+      this.logger.warn(`User with id ${id} updated in database`);
       return {
         status_code: HttpStatus.OK,
         detail: body,
-        result: `User width id:${id} updated.`,
+        result: `User with id ${id} updated.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id ${user_id} not found.`,
+          error: `User with id ${user_id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -185,17 +185,17 @@ export class UserService {
         throw new ForbiddenException('You can delete only your profile!');
 
       await this.userRepository.delete(id);
-      this.logger.warn(`User width id${id} deleted in database`);
+      this.logger.warn(`User with id${id} deleted in database`);
       return {
         status_code: HttpStatus.OK,
         detail: id,
-        result: `User width id:${id} deleted.`,
+        result: `User with id:${id} deleted.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width id:${user_id} not found.`,
+          error: `User with id:${user_id} not found.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -215,13 +215,13 @@ export class UserService {
       return {
         status_code: HttpStatus.OK,
         detail: user,
-        result: `User width  ${email} found.`,
+        result: `User with  ${email} found.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User width this id or email didn't find.`,
+          error: `User with this email didn't find.`,
         },
         HttpStatus.FORBIDDEN,
         {
