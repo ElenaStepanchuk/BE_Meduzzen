@@ -17,6 +17,7 @@ import { UpdateCompanyDto } from './dto/updateCompany.dto';
 import { Company } from './entities/company.entity';
 import { IResponse } from 'src/types/Iresponse';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from './guards/roles.guard';
 
 @Controller('companies')
 export class CompanyController {
@@ -50,7 +51,7 @@ export class CompanyController {
   }
 
   // Update company data
-  @UseGuards(AuthGuard(['auth0', 'jwt']))
+  @UseGuards(AuthGuard(['auth0', 'jwt']), RolesGuard)
   @Patch(':id')
   async update(
     @Headers('Authorization') authHeader: string,
@@ -65,7 +66,7 @@ export class CompanyController {
   }
 
   // Delete company by id
-  @UseGuards(AuthGuard(['auth0', 'jwt']))
+  @UseGuards(AuthGuard(['auth0', 'jwt']), RolesGuard)
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,

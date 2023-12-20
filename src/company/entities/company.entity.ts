@@ -15,6 +15,9 @@ export class Company {
 
   @OneToMany(() => Member, (member) => member.company, {
     onDelete: 'CASCADE',
+    eager: true,
+    cascade: ['update'],
+    orphanedRowAction: 'delete',
   })
   companies: Company[];
 

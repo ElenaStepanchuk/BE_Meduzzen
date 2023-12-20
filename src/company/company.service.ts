@@ -147,16 +147,6 @@ export class CompanyService {
       if (!existCompany)
         throw new BadRequestException('This company not found!');
 
-      const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
-      const { email } = decodedToken as { email: string };
-
-      const company = await this.memberRepository.findOne({
-        where: { user: email },
-      });
-
-      if (!company && company.role !== 'owner')
-        throw new BadRequestException(' You can update only your own company!');
       const { company_name, company_description, visibility } = body;
 
       await this.companyRepository.update(
@@ -196,18 +186,7 @@ export class CompanyService {
       });
       if (!company) throw new BadRequestException('This company no found!');
 
-      const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
-      const { email } = decodedToken as { email: string };
-
-      const deleteCompany = await this.memberRepository.findOne({
-        where: { user: email },
-      });
-
-      if (!deleteCompany && deleteCompany.role !== 'owner')
-        throw new BadRequestException(' You can delete only your own company!');
-
-      await this.memberRepository.delete(deleteCompany.id);
+      await this.memberRepository.delete({ company_id: id });
       await this.companyRepository.delete(id);
       this.logger.warn(`Company with id${id} deleted in database`);
       return {

@@ -21,10 +21,10 @@ export class Member {
   @Column()
   user: string;
 
-  @ManyToOne(() => Company, (company) => company.companies, {
-    eager: true,
-    cascade: true,
-  })
+  @Column()
+  company_id: number;
+
+  @ManyToOne(() => Company, (company) => company.companies)
   @JoinColumn({ name: 'company_id' })
   company: Company;
 }
