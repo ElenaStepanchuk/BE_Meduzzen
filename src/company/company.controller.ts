@@ -18,6 +18,7 @@ import { Company } from './entities/company.entity';
 import { IResponse } from 'src/types/Iresponse';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from './guards/roles.guard';
+import { Member } from './entities/member.entity';
 
 @Controller('companies')
 export class CompanyController {
@@ -73,5 +74,14 @@ export class CompanyController {
     @Headers('Authorization') authHeader: string,
   ): Promise<IResponse<Company>> {
     return this.companyService.deleteCompanyById(authHeader, id);
+  }
+
+  // all companies list by user id
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
+  @Get('user/list')
+  findCompaniesByUserId(
+    @Headers('Authorization') authHeader: string,
+  ): Promise<IResponse<Member[]>> {
+    return this.companyService.findCompaniesByUserId(authHeader);
   }
 }

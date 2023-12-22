@@ -1,11 +1,5 @@
 import { Company } from 'src/company/entities/company.entity';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 
 @Entity('members')
 export class Member {
@@ -24,7 +18,11 @@ export class Member {
   @Column()
   company_id: number;
 
-  @ManyToOne(() => Company, (company) => company.companies)
-  @JoinColumn({ name: 'company_id' })
+  @ManyToOne(() => Company, (company) => company.companies, {
+    onDelete: 'CASCADE',
+    eager: true,
+    cascade: ['update'],
+    orphanedRowAction: 'delete',
+  })
   company: Company;
 }
