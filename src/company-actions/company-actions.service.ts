@@ -231,4 +231,41 @@ export class CompanyActionsService {
       );
     }
   }
+
+  // Delete invite by user to company
+  async DeleteUserInvite(
+    company_id: number,
+    user_id: number,
+  ): Promise<IResponse<object>> {
+    try {
+      const invitedUser = await this.inviteRepository.find({
+        where: { user_id },
+      });
+
+      const findCompany = await invitedUser.find(
+        (item) => item.company_id === company_id,
+      );
+
+      if (!findCompany) throw new BadRequestException('User not found!');
+
+      await this.inviteRepository.delete(company_id);
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: { ...findCompany },
+        result: `Invite with user_id ${user_id} deleted!`,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
 }

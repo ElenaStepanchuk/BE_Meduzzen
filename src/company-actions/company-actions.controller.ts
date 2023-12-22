@@ -1,17 +1,13 @@
 import {
   Controller,
   Post,
-  Headers,
   Param,
   ParseIntPipe,
   Query,
-  Body,
   Delete,
 } from '@nestjs/common';
 import { CompanyActionsService } from './company-actions.service';
 import { IResponse } from 'src/types/Iresponse';
-// import { CreateCompanyActionDto } from './dto/create-company-action.dto';
-// import { UpdateCompanyActionDto } from './dto/update-company-action.dto';
 
 @Controller('companies/actions')
 export class CompanyActionsController {
