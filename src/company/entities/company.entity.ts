@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 
 @Entity('companies')
@@ -13,9 +14,8 @@ export class Company {
   @PrimaryGeneratedColumn()
   id?: number;
 
-  @OneToMany(() => Member, (member) => member.company, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany(() => Member, (member) => member.company)
+  @JoinColumn({ name: 'member_id' })
   companies: Company[];
 
   @Column()

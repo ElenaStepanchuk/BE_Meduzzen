@@ -51,13 +51,13 @@ export class CompanyService {
         ...createCompanyDto,
       });
 
-      this.logger.warn('newCompany', newCompany);
       await this.memberRepository.save({
         role: 'owner',
         user_id: user.detail.id,
         user: user.detail.email,
         company_name: newCompany.company_name,
         company: newCompany,
+        company_id: newCompany.id,
       });
       this.logger.warn('New company added in database');
       return {
@@ -79,6 +79,7 @@ export class CompanyService {
     }
   }
 
+  // all companies list
   async findAllCompanies(
     page: number,
     limit: number,
@@ -86,6 +87,7 @@ export class CompanyService {
     try {
       const pagination = new Pagination();
       const paginatePage = await pagination.getPage(page, limit);
+
       const companiesList = await this.companyRepository.find({
         ...paginatePage,
       });
@@ -134,6 +136,7 @@ export class CompanyService {
     }
   }
 
+  // update company by id
   async updateCompanyById(
     authHeader: string,
     id: number,
@@ -147,16 +150,6 @@ export class CompanyService {
       if (!existCompany)
         throw new BadRequestException('This company not found!');
 
-      const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
-      const { email } = decodedToken as { email: string };
-
-      const company = await this.memberRepository.findOne({
-        where: { user: email },
-      });
-
-      if (!company && company.role !== 'owner')
-        throw new BadRequestException(' You can update only your own company!');
       const { company_name, company_description, visibility } = body;
 
       await this.companyRepository.update(
@@ -185,7 +178,7 @@ export class CompanyService {
     }
   }
 
-  // delete company
+  // delete company by id
   async deleteCompanyById(
     authHeader: string,
     id: number,
@@ -196,20 +189,8 @@ export class CompanyService {
       });
       if (!company) throw new BadRequestException('This company no found!');
 
-      const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
-      const { email } = decodedToken as { email: string };
-
-      const deleteCompany = await this.memberRepository.findOne({
-        where: { user: email },
-      });
-
-      if (!deleteCompany && deleteCompany.role !== 'owner')
-        throw new BadRequestException(' You can delete only your own company!');
-
-      await this.memberRepository.delete(deleteCompany.id);
       await this.companyRepository.delete(id);
-      this.logger.warn(`Company with id${id} deleted in database`);
+      this.logger.warn(`Company with id ${id} deleted in database`);
       return {
         status_code: HttpStatus.OK,
         detail: company,
@@ -222,6 +203,36 @@ export class CompanyService {
           error: `Company with id ${id} not found.`,
         },
         HttpStatus.NOT_FOUND,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // all companies list by user id
+  async findCompaniesByUserId(
+    authHeader: string,
+  ): Promise<IResponse<Member[]>> {
+    try {
+      const getOnlyToken = new DecodedToken(this.configService);
+      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const { id } = decodedToken as { id: number };
+
+      const companies = await this.memberRepository.findBy({ user_id: id });
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: companies,
+        result: 'We found all companies list by user id.',
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
         {
           cause: error,
         },

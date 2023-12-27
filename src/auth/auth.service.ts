@@ -87,7 +87,7 @@ export class AuthService {
         action_token: tokens.actionToken,
         user_id: user.detail.id,
       });
-
+      this.logger.warn('New user regisrtated!');
       return user;
     } catch (error) {
       throw new HttpException(
@@ -130,7 +130,6 @@ export class AuthService {
         action_token: tokens.actionToken,
       });
 
-      this.logger.warn('tokens', tokens);
       return {
         status_code: HttpStatus.OK,
         detail: { ...checkUser.detail, tokens },
