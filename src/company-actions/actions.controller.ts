@@ -7,6 +7,7 @@ import {
   Delete,
   UseGuards,
   Get,
+  Body,
 } from '@nestjs/common';
 import { ActionsService } from './actions.service';
 import { IResponse } from 'src/types/Iresponse';
@@ -85,8 +86,9 @@ export class ActionsCompanyController {
   addRoleAdmin(
     @Param('company_id', ParseIntPipe) company_id: number,
     @Query('user_id', ParseIntPipe) user_id: number,
+    @Body('role') role: string,
   ): Promise<IResponse<object>> {
-    return this.actionsService.addRoleAdmin(company_id, user_id);
+    return this.actionsService.addRoleAdmin(company_id, user_id, role);
   }
 
   // Admin list

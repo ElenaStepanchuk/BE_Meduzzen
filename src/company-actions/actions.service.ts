@@ -15,6 +15,7 @@ import { Invite } from './entities/invite.entity';
 import { InviteStatus } from './enam/inviteStatus';
 import { CreateInviteDto } from './dto/createInvite.dto';
 import { CreateMemberDto } from 'src/company/dto/createMember.dto';
+import { Role } from './enam/role';
 
 @Injectable()
 export class ActionsService {
@@ -244,14 +245,14 @@ export class ActionsService {
     company_id: number,
   ): Promise<IResponse<CreateMemberDto[]>> {
     try {
-      const companiesList = await this.memberRepository.find({
+      const membersList = await this.memberRepository.find({
         where: { company_id },
       });
-      if (!companiesList) throw new NotFoundException('Not found companies');
+      if (!membersList) throw new NotFoundException('Not found companies');
 
       return {
         status_code: HttpStatus.OK,
-        detail: companiesList,
+        detail: membersList,
         result: `Users list company_id ${company_id} created!`,
       };
     } catch (error) {
@@ -278,10 +279,6 @@ export class ActionsService {
       const invite = await this.inviteRepository.find({
         where: { user_id, status: status },
       });
-      if (!invite)
-        throw new NotFoundException(
-          'Not found invite or status invite rejected/accepted.',
-        );
 
       return {
         status_code: HttpStatus.OK,
@@ -308,9 +305,8 @@ export class ActionsService {
   ): Promise<IResponse<CreateMemberDto[]>> {
     try {
       const companiesList = await this.memberRepository.find({
-        where: { user_id, role: 'user' },
+        where: { user_id, role: Role.USER },
       });
-      if (!companiesList) throw new NotFoundException('Not found companies');
 
       return {
         status_code: HttpStatus.OK,
@@ -335,22 +331,20 @@ export class ActionsService {
   async addRoleAdmin(
     company_id: number,
     user_id: number,
+    role: string,
   ): Promise<IResponse<object>> {
     try {
-      const user = await this.memberRepository.find({
+      await this.memberRepository.find({
         where: {
           company_id,
           user_id,
-          role: 'user',
+          role: role,
         },
       });
-      if (user.length === 0)
-        throw new NotFoundException('Didn`t find user with this id!');
+
       const admin = await this.memberRepository.update(user_id, {
         role: 'administrator',
       });
-
-      // this.logger.warn('admin', { ...admin });
 
       return {
         status_code: HttpStatus.OK,
@@ -377,7 +371,6 @@ export class ActionsService {
       const list = await this.memberRepository.find({
         where: { company_id, role: 'administrator' },
       });
-      if (!list) throw new NotFoundException('Not found administrators!');
 
       return {
         status_code: HttpStatus.OK,
