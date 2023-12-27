@@ -15,6 +15,7 @@ import { Invite } from './entities/invite.entity';
 import { InviteStatus } from './enam/inviteStatus';
 import { CreateInviteDto } from './dto/createInvite.dto';
 import { CreateMemberDto } from 'src/company/dto/createMember.dto';
+import { Role } from './enam/role';
 
 @Injectable()
 export class ActionsService {
@@ -244,14 +245,14 @@ export class ActionsService {
     company_id: number,
   ): Promise<IResponse<CreateMemberDto[]>> {
     try {
-      const companiesList = await this.memberRepository.find({
+      const membersList = await this.memberRepository.find({
         where: { company_id },
       });
-      if (!companiesList) throw new NotFoundException('Not found companies');
+      if (!membersList) throw new NotFoundException('Not found companies');
 
       return {
         status_code: HttpStatus.OK,
-        detail: companiesList,
+        detail: membersList,
         result: `Users list company_id ${company_id} created!`,
       };
     } catch (error) {
@@ -278,10 +279,6 @@ export class ActionsService {
       const invite = await this.inviteRepository.find({
         where: { user_id, status: status },
       });
-      if (!invite)
-        throw new NotFoundException(
-          'Not found invite or status invite rejected/accepted.',
-        );
 
       return {
         status_code: HttpStatus.OK,
@@ -308,14 +305,77 @@ export class ActionsService {
   ): Promise<IResponse<CreateMemberDto[]>> {
     try {
       const companiesList = await this.memberRepository.find({
-        where: { user_id, role: 'user' },
+        where: { user_id, role: Role.USER },
       });
-      if (!companiesList) throw new NotFoundException('Not found companies');
 
       return {
         status_code: HttpStatus.OK,
         detail: companiesList,
         result: `Invites list user_id ${user_id} created!`,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Add role admin
+  async addRoleAdmin(
+    company_id: number,
+    user_id: number,
+    role: string,
+  ): Promise<IResponse<object>> {
+    try {
+      await this.memberRepository.find({
+        where: {
+          company_id,
+          user_id,
+          role: role,
+        },
+      });
+
+      const admin = await this.memberRepository.update(user_id, {
+        role: 'administrator',
+      });
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: admin,
+        result: 'We added role `administrator` this user!',
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Admin list
+  async adminList(company_id: number): Promise<IResponse<any>> {
+    try {
+      const list = await this.memberRepository.find({
+        where: { company_id, role: 'administrator' },
+      });
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: list,
+        result: `Administrators list created!`,
       };
     } catch (error) {
       throw new HttpException(
