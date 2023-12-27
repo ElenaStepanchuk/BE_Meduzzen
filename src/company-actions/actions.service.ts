@@ -330,4 +330,71 @@ export class ActionsService {
       );
     }
   }
+
+  // Add role admin
+  async addRoleAdmin(
+    company_id: number,
+    user_id: number,
+  ): Promise<IResponse<object>> {
+    try {
+      const user = await this.memberRepository.find({
+        where: {
+          company_id,
+          user_id,
+          role: 'user',
+        },
+      });
+      if (user.length === 0)
+        throw new NotFoundException('Didn`t find user with this id!');
+      const admin = await this.memberRepository.update(user_id, {
+        role: 'administrator',
+      });
+
+      // this.logger.warn('admin', { ...admin });
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: admin,
+        result: 'We added role `administrator` this user!',
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  // Admin list
+  async adminList(company_id: number): Promise<IResponse<any>> {
+    try {
+      const list = await this.memberRepository.find({
+        where: { company_id, role: 'administrator' },
+      });
+      if (!list) throw new NotFoundException('Not found administrators!');
+
+      return {
+        status_code: HttpStatus.OK,
+        detail: list,
+        result: `Administrators list created!`,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status_code: HttpStatus.FORBIDDEN,
+          error: 'Company not created',
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
 }

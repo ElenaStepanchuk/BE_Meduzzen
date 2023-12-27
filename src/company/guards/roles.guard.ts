@@ -30,11 +30,11 @@ export class RolesGuard implements CanActivate {
     const decodedToken = await getOnlyToken.decoded(authHeader);
     const { email } = decodedToken as { email: string };
 
-    const member = await this.memberRepository.findOne({
-      where: { user: email },
+    const member = await this.memberRepository.find({
+      where: { user: email, role: 'owner' },
     });
 
-    if (!member || member.role !== 'owner')
+    if (!member)
       throw new BadRequestException(
         'You can do any operations only in your own company!',
       );

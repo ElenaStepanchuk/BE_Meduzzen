@@ -71,12 +71,31 @@ export class ActionsCompanyController {
   }
 
   // Owner`s list where are users(members)
-  @UseGuards(AuthGuard(['auth0', 'jwt']), CompareUseGuard)
+  @UseGuards(AuthGuard(['auth0', 'jwt']), RolesGuard)
   @Get(':company_id/users')
   async ownerUserList(
     @Param('company_id', ParseIntPipe) company_id: number,
   ): Promise<IResponse<CreateMemberDto[]>> {
     return this.actionsService.ownerUserList(company_id);
+  }
+
+  // Add role admin
+  @UseGuards(AuthGuard(['auth0', 'jwt']), RolesGuard)
+  @Post('role/:company_id')
+  addRoleAdmin(
+    @Param('company_id', ParseIntPipe) company_id: number,
+    @Query('user_id', ParseIntPipe) user_id: number,
+  ): Promise<IResponse<object>> {
+    return this.actionsService.addRoleAdmin(company_id, user_id);
+  }
+
+  // Admin list
+  @UseGuards(AuthGuard(['auth0', 'jwt']), RolesGuard)
+  @Get('admin/:company_id')
+  adminList(
+    @Param('company_id', ParseIntPipe) company_id: number,
+  ): Promise<IResponse<any>> {
+    return this.actionsService.adminList(company_id);
   }
 }
 
