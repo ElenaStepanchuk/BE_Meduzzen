@@ -8,17 +8,11 @@ import {
 
 import { DecodedToken } from 'src/utils/decodedToken.util';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Member } from '../entities/member.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(
-    private configService: ConfigService,
-    @InjectRepository(Member) private memberRepository: Repository<Member>,
-  ) {
-    this.logger = new Logger('ROLES GUARD');
+export class CompareUseGuard implements CanActivate {
+  constructor(private configService: ConfigService) {
+    this.logger = new Logger('CHECKUSER GUARD');
   }
   logger: Logger;
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -28,15 +22,12 @@ export class RolesGuard implements CanActivate {
 
     const getOnlyToken = new DecodedToken(this.configService);
     const decodedToken = await getOnlyToken.decoded(authHeader);
-    const { email } = decodedToken as { email: string };
+    const { id } = decodedToken as { email: string; id: number };
+    const user_id = parseInt(request.query.user_id, 10);
 
-    const member = await this.memberRepository.findOne({
-      where: { user: email },
-    });
-
-    if (!member || member.role !== 'owner')
+    if (id !== user_id)
       throw new BadRequestException(
-        'You can do any operations only in your own company!',
+        'You can do any operations only on your own user!',
       );
 
     return true;
