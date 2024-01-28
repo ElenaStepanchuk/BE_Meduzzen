@@ -40,7 +40,8 @@ export class AuthController {
     return this.authService.login(createUserDto);
   }
 
-  @Get('logout')
+  @UseGuards(AuthGuard(['auth0', 'jwt']))
+  @Post('logout')
   logout(
     @Headers('Authorization') authHeader: string,
   ): Promise<IResponse<boolean>> {
@@ -48,8 +49,10 @@ export class AuthController {
   }
 
   @Get('refresh')
-  refreshTokens(@Headers('Authorization') authHeader: string): Promise<object> {
-    return this.authService.refreshTokens(authHeader);
+  refreshTokens(
+    @Headers('Authorization') refreshHeader: string,
+  ): Promise<object> {
+    return this.authService.refreshTokens(refreshHeader);
   }
 
   @UseGuards(AuthGuard(['auth0', 'jwt']))

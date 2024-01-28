@@ -46,9 +46,9 @@ export class UserController {
   @Get()
   @UseGuards(AuthGuard(['auth0', 'jwt']))
   @HttpCode(HttpStatus.OK)
-  async getAllUser(
+  async getAllUsers(
     @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('limit') limit: number = 4,
   ): Promise<IResponse<User[]>> {
     return this.userService.getAllUsers(page, limit);
   }

@@ -21,7 +21,7 @@ export class CompareUseGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     const getOnlyToken = new DecodedToken(this.configService);
-    const decodedToken = await getOnlyToken.decoded(authHeader);
+    const decodedToken = await getOnlyToken.decodedAccess(authHeader);
     const { id } = decodedToken as { email: string; id: number };
     const user_id = parseInt(request.query.user_id, 10);
 

@@ -153,7 +153,7 @@ export class AuthService {
   async logout(authHeader: string): Promise<IResponse<boolean>> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
 
       await this.authRepository.update(id, {
@@ -181,10 +181,10 @@ export class AuthService {
   }
 
   // update refresh, access and action tokens
-  async refreshTokens(authHeader: string): Promise<IResponse<object>> {
+  async refreshTokens(refreshHeader: string): Promise<IResponse<object>> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedRefresh(refreshHeader);
       const { id, email } = decodedToken as { id: number; email: string };
 
       const newTokens = new GetTokens(this.jwtService, this.configService);
@@ -203,13 +203,13 @@ export class AuthService {
       return {
         status_code: HttpStatus.OK,
         detail: tokens,
-        result: `User logged out.`,
+        result: `User get new tokens.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: 'Email or password not valid.',
+          error: 'Tokens not refresh.',
         },
         HttpStatus.FORBIDDEN,
         {
@@ -222,7 +222,7 @@ export class AuthService {
   async getProfile(authHeader: string): Promise<IResponse<User>> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
       const user = await this.userService.getUserById(id);
 

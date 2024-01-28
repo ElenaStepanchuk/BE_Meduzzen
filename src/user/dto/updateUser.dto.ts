@@ -1,10 +1,9 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 import { Auth } from 'src/auth/entities/auth.entity';
 import { Company } from 'src/company/entities/company.entity';
 
 export class UpdateUserDto {
-  @IsEmail()
-  email: string;
+  email?: string;
 
   @IsString()
   first_name: string;
