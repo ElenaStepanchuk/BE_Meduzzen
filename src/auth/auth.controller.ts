@@ -24,6 +24,7 @@ export class AuthController {
   logger: Logger;
 
   @Post('registration')
+  @UseGuards(ValidateUserGuard)
   @UsePipes(new ValidationPipe())
   async registration(
     @Body() createUserDto: CreateUserDto,
@@ -31,7 +32,6 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
 
-  @UseGuards(ValidateUserGuard)
   @Post('login')
   @UsePipes(new ValidationPipe())
   async login(
