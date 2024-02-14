@@ -42,7 +42,6 @@ export class UserService {
         },
       });
       if (existUser) throw new BadRequestException('This email already exist');
-
       const hash = new Hash();
       const hashedPassword = await hash.hashData(createUserDto.password);
 
@@ -61,7 +60,7 @@ export class UserService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: 'User not created',
+          error: 'User didn`t create',
         },
         HttpStatus.FORBIDDEN,
         {
@@ -93,8 +92,8 @@ export class UserService {
     } catch (error) {
       throw new HttpException(
         {
-          status_code: HttpStatus.FORBIDDEN,
-          error: 'Users not found',
+          status_code: HttpStatus.NOT_FOUND,
+          error: 'Users didn`t find',
         },
         HttpStatus.FORBIDDEN,
         {
@@ -109,7 +108,16 @@ export class UserService {
     try {
       const user = await this.userRepository.findOne({
         where: { id },
-        select: ['id', 'email', 'createdAt', 'updatedAt'],
+        select: [
+          'id',
+          'email',
+          'createdAt',
+          'updatedAt',
+          'first_name',
+          'last_name',
+          'photo',
+          'role',
+        ],
       });
       if (!user) throw new BadRequestException('This user not found!');
       return {
@@ -120,8 +128,8 @@ export class UserService {
     } catch (error) {
       throw new HttpException(
         {
-          status_code: HttpStatus.FORBIDDEN,
-          error: `User with id ${id} not found.`,
+          status_code: HttpStatus.NOT_FOUND,
+          error: `User with id ${id} User didn't find.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -139,7 +147,7 @@ export class UserService {
   ): Promise<IResponse<User> | null> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
       if (id !== user_id)
         throw new ForbiddenException('You can update only your profile!');
@@ -156,13 +164,13 @@ export class UserService {
       return {
         status_code: HttpStatus.OK,
         detail: body,
-        result: `User with id ${id} updated.`,
+        result: `User with id ${user_id} updated.`,
       };
     } catch (error) {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User with id ${user_id} not found.`,
+          error: `User with id ${user_id} didn't update.`,
         },
         HttpStatus.FORBIDDEN,
         {
@@ -179,7 +187,7 @@ export class UserService {
   ): Promise<IResponse<number> | null> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
       if (id !== user_id)
         throw new ForbiddenException('You can delete only your profile!');
@@ -195,7 +203,7 @@ export class UserService {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: `User with id:${user_id} not found.`,
+          error: `User with id:${user_id} didn't delete.`,
         },
         HttpStatus.FORBIDDEN,
         {

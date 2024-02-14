@@ -53,7 +53,7 @@ export class GetTokens {
       throw new HttpException(
         {
           status_code: HttpStatus.FORBIDDEN,
-          error: 'Email or password not valid.',
+          error: 'Token not valid',
         },
         HttpStatus.FORBIDDEN,
         {

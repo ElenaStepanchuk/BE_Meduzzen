@@ -27,7 +27,7 @@ export class RolesGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     const getOnlyToken = new DecodedToken(this.configService);
-    const decodedToken = await getOnlyToken.decoded(authHeader);
+    const decodedToken = await getOnlyToken.decodedAccess(authHeader);
     const { email } = decodedToken as { email: string };
 
     const member = await this.memberRepository.find({

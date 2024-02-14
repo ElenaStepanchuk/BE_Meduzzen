@@ -28,8 +28,9 @@ export class Auth0Strategy extends PassportStrategy(Strategy, 'auth0') {
   validate(payload: User) {
     const minimumScope = ['openid', 'profile', 'email'];
     if (
-      payload?.scope
-        ?.split(' ')
+      !payload?.scope ||
+      payload.scope
+        .split(' ')
         .filter((scope) => minimumScope.indexOf(scope) > -1).length !== 3
     ) {
       throw new UnauthorizedException(

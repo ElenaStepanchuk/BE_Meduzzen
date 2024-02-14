@@ -43,7 +43,7 @@ export class CompanyService {
         throw new BadRequestException('This company already exist');
 
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
       const user = await this.userService.getUserById(id);
 
@@ -216,7 +216,7 @@ export class CompanyService {
   ): Promise<IResponse<Member[]>> {
     try {
       const getOnlyToken = new DecodedToken(this.configService);
-      const decodedToken = await getOnlyToken.decoded(authHeader);
+      const decodedToken = await getOnlyToken.decodedAccess(authHeader);
       const { id } = decodedToken as { id: number };
 
       const companies = await this.memberRepository.findBy({ user_id: id });
